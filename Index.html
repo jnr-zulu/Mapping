@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Visual Mapping</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            font-family: 'Courier New', monospace;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            background: radial-gradient(circle at 50% 50%, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .table-box {
+            position: absolute;
+            background: linear-gradient(135deg, #2d3748, #1a202c);
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .table-box:hover {
+            border-color: #63b3ed;
+            box-shadow: 0 6px 20px rgba(99, 179, 237, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .table-header {
+            background: linear-gradient(90deg, #4299e1, #3182ce);
+            color: white;
+            padding: 8px 12px;
+            margin: -12px -12px 8px -12px;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            border-bottom: 2px solid #2b6cb0;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            margin: 2px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            font-size: 11px;
+            border-left: 3px solid transparent;
+        }
+
+        .field.pk {
+            border-left-color: #f6ad55;
+            background: rgba(246, 173, 85, 0.1);
+        }
+
+        .field.fk {
+            border-left-color: #68d391;
+            background: rgba(104, 211, 145, 0.1);
+        }
+
+        .field-name {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .field-type {
+            color: #a0aec0;
+            font-size: 10px;
+        }
+
+        .field-key {
+            color: #f6ad55;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .field.fk .field-key {
+            color: #68d391;
+        }
+
+        /* Connection lines */
+        .connection-line {
+            position: absolute;
+            background: #4a5568;
+            z-index: 1;
+            opacity: 0.7;
+        }
+
+        .connection-line:hover {
+            background: #63b3ed;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        /* Table positioning */
+        .user { top: 50px; left: 50px; }
+        .characters { top: 200px; left: 300px; }
+        .skills { top: 50px; left: 550px; }
+        .items { top: 200px; left: 800px; }
+        .team { top: 50px; left: 1100px; }
+        .error { top: 350px; left: 50px; }
+        .inventory { top: 500px; left: 300px; }
+        .character-skills { top: 350px; left: 550px; }
+        .character-items { top: 500px; left: 800px; }
+        .team-members { top: 200px; left: 1100px; }
+        .team-leader { top: 350px; left: 1100px; }
+        .inventory-items { top: 650px; left: 550px; }
+        .inventory-records { top: 650px; left: 50px; }
+
+        /* Relationship indicators */
+        .relationship-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #63b3ed;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            z-index: 20;
+        }
+
+        /* Legend */
+        .legend {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #4a5568;
+            z-index: 100;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .pk-color { background: #f6ad55; }
+        .fk-color { background: #68d391; }
+        .rel-color { background: #4a5568; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color pk-color"></div>
+                <span>Primary Key</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color fk-color"></div>
+                <span>Foreign Key</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color rel-color"></div>
+                <span>Relationship</span>
+            </div>
+        </div>
+
+        <!-- USER Table -->
+        <div class="table-box user">
+            <div class="table-header">USER</div>
+            <div class="field pk">
+                <span class="field-name">UserID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">accName</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">accPassword</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">accStatus</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">lastPayDate</span>
+                <span class="field-type">date</span>
+            </div>
+            <div class="field">
+                <span class="field-name">email</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">lastLoginDate</span>
+                <span class="field-type">date</span>
+            </div>
+        </div>
+
+        <!-- CHARACTERS Table -->
+        <div class="table-box characters">
+            <div class="table-header">CHARACTERS</div>
+            <div class="field pk">
+                <span class="field-name">UserName</span>
+                <span class="field-type">string</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">description</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">UserID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- SKILLS Table -->
+        <div class="table-box skills">
+            <div class="table-header">SKILLS</div>
+            <div class="field pk">
+                <span class="field-name">Skillname</span>
+                <span class="field-type">string</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">SkillDescription</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">SkillLevel</span>
+                <span class="field-type">int</span>
+            </div>
+            <div class="field">
+                <span class="field-name">SkillType</span>
+                <span class="field-type">string</span>
+            </div>
+        </div>
+
+        <!-- ITEMS Table -->
+        <div class="table-box items">
+            <div class="table-header">ITEMS</div>
+            <div class="field pk">
+                <span class="field-name">ItemID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemName</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemDescription</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemType</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemQuantity</span>
+                <span class="field-type">int</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemDuration</span>
+                <span class="field-type">int</span>
+            </div>
+        </div>
+
+        <!-- TEAM Table -->
+        <div class="table-box team">
+            <div class="table-header">TEAM</div>
+            <div class="field pk">
+                <span class="field-name">TeamID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">TeamName</span>
+                <span class="field-type">string</span>
+            </div>
+        </div>
+
+        <!-- ERROR Table -->
+        <div class="table-box error">
+            <div class="table-header">ERROR</div>
+            <div class="field pk">
+                <span class="field-name">errorID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">errorTimestamp</span>
+                <span class="field-type">datetime</span>
+            </div>
+            <div class="field">
+                <span class="field-name">errorType</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field">
+                <span class="field-name">errorDescription</span>
+                <span class="field-type">string</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">UserID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- INVENTORY Table -->
+        <div class="table-box inventory">
+            <div class="table-header">INVENTORY</div>
+            <div class="field pk">
+                <span class="field-name">InventoryID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">characterID</span>
+                <span class="field-type">string</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- CHARACTER_SKILLS Table -->
+        <div class="table-box character-skills">
+            <div class="table-header">CHARACTER_SKILLS</div>
+            <div class="field fk">
+                <span class="field-name">UserName</span>
+                <span class="field-type">string</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">SkillName</span>
+                <span class="field-type">string</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- CHARACTER_ITEMS Table -->
+        <div class="table-box character-items">
+            <div class="table-header">CHARACTER_ITEMS</div>
+            <div class="field fk">
+                <span class="field-name">UserName</span>
+                <span class="field-type">string</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">ItemID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- TEAM_MEMBERS Table -->
+        <div class="table-box team-members">
+            <div class="table-header">TEAM_MEMBERS</div>
+            <div class="field fk">
+                <span class="field-name">TeamID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">UserID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- TEAM_LEADER Table -->
+        <div class="table-box team-leader">
+            <div class="table-header">TEAM_LEADER</div>
+            <div class="field fk">
+                <span class="field-name">TeamID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">LeadCharacterID</span>
+                <span class="field-type">string</span>
+                <span class="field-key">FK</span>
+            </div>
+        </div>
+
+        <!-- INVENTORY_ITEMS Table -->
+        <div class="table-box inventory-items">
+            <div class="table-header">INVENTORY_ITEMS</div>
+            <div class="field fk">
+                <span class="field-name">InventoryID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">ItemID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">Quantity</span>
+                <span class="field-type">int</span>
+            </div>
+        </div>
+
+        <!-- INVENTORY_RECORDS Table -->
+        <div class="table-box inventory-records">
+            <div class="table-header">INVENTORY_RECORDS</div>
+            <div class="field pk">
+                <span class="field-name">recordID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">PK</span>
+            </div>
+            <div class="field fk">
+                <span class="field-name">InventoryID</span>
+                <span class="field-type">int</span>
+                <span class="field-key">FK</span>
+            </div>
+            <div class="field">
+                <span class="field-name">ItemQuantity</span>
+                <span class="field-type">int</span>
+            </div>
+            <div class="field">
+                <span class="field-name">actionType</span>
+                <span class="field-type">string</span>
+            </div>
+        </div>
+
+        <!-- Connection Lines (simplified visual representation) -->
+        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;">
+            <!-- USER to CHARACTERS -->
+            <line x1="230" y1="150" x2="300" y2="220" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- USER to ERROR -->
+            <line x1="130" y1="250" x2="130" y2="350" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- USER to TEAM_MEMBERS -->
+            <line x1="230" y1="100" x2="1100" y2="220" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- CHARACTERS to INVENTORY -->
+            <line x1="380" y1="280" x2="380" y2="500" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- CHARACTERS to CHARACTER_SKILLS -->
+            <line x1="480" y1="240" x2="550" y2="370" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- CHARACTERS to CHARACTER_ITEMS -->
+            <line x1="480" y1="260" x2="800" y2="520" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- SKILLS to CHARACTER_SKILLS -->
+            <line x1="630" y1="200" x2="630" y2="350" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- ITEMS to CHARACTER_ITEMS -->
+            <line x1="880" y1="350" x2="880" y2="500" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- ITEMS to INVENTORY_ITEMS -->
+            <line x1="800" y1="400" x2="650" y2="650" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- INVENTORY to INVENTORY_ITEMS -->
+            <line x1="450" y1="600" x2="550" y2="670" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- INVENTORY to INVENTORY_RECORDS -->
+            <line x1="300" y1="600" x2="200" y2="650" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- TEAM to TEAM_MEMBERS -->
+            <line x1="1180" y1="130" x2="1180" y2="200" stroke="#4a5568" stroke-width="2"/>
+            
+            <!-- TEAM to TEAM_LEADER -->
+            <line x1="1180" y1="130" x2="1180" y2="350" stroke="#4a5568" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <script>
+        // Add interactive hover effects
+        document.querySelectorAll('.table-box').forEach(table => {
+            table.addEventListener('mouseenter', function() {
+                this.style.zIndex = '50';
+            });
+            
+            table.addEventListener('mouseleave', function() {
+                this.style.zIndex = '10';
+            });
+        });
+
+        // Add drag functionality for better positioning
+        let isDragging = false;
+        let currentElement = null;
+        let offset = { x: 0, y: 0 };
+
+        document.querySelectorAll('.table-box').forEach(table => {
+            table.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                currentElement = this;
+                const rect = this.getBoundingClientRect();
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+                this.style.cursor = 'grabbing';
+            });
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging && currentElement) {
+                const container = document.querySelector('.container');
+                const containerRect = container.getBoundingClientRect();
+                currentElement.style.left = (e.clientX - containerRect.left - offset.x) + 'px';
+                currentElement.style.top = (e.clientY - containerRect.top - offset.y) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (currentElement) {
+                currentElement.style.cursor = 'grab';
+            }
+            isDragging = false;
+            currentElement = null;
+        });
+    </script>
+</body>
+</html>
